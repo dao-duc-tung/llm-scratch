@@ -8,7 +8,7 @@ The goal is to build an LLM from scratch that does:
 - Not too large in param size, less than 1B params
 - 1024 context length
 
-Setup env:
+Setup environment:
 
 ```bash
 pyenv virtualenv 3.13.3 llm
