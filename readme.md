@@ -17,9 +17,7 @@ pyenv local llm
 
 ## Prepare a dataset
 
-Code files:
-
-- `prepare_dataset.py`: download the dataset and create a sample dataset for testing the code faster
+The file `src/prepare_dataset.py` downloads the dataset and creates a sample dataset for testing the code faster.
 
 ### Why do we need a dataset?
 
@@ -53,3 +51,56 @@ Let's pick [the 10 billion tokens subset of the FineWeb dataset on HuggingFace](
 | Car Wash For ...    | <urn..> | CC-.. | http://.. | 2013-.. | s3://..   | en       | 0.911518       | 125         |
 
 ## Tokenize the dataset
+
+Assume that we already clean and preprocess the dataset (eg. remove non-English, deduplicate, filter for quality), let's tokenize it.
+
+The file `src/tokenize_dataset.py` loads the dataset, tokenizes it and saves the tokenized dataset to disk.
+
+### Why do we need to tokenize the dataset?
+
+- Numerical representation: models require input as numbers. Tokenization maps text to token IDs
+- Vocabulary building: tokenization defines the set of tokens (vocabulary) the model will understand
+- Efficient processing: subword tokenization (eg. BPE) handles rare words and reduces out-of-vocabulary issues. For example, common phrases are usually grouped into a single token, while a rare word will be broken down into several tokens
+- Consistent input: tokenization ensures consistent splitting of text, making training and inference reliable
+
+Let's use byte-level Byte-Pair Encoding algorithm to tokenize our dataset.
+
+### How does byte-level BPE work?
+
+Ref: https://en.wikipedia.org/wiki/Byte-pair_encoding
+
+### Why do we need `batch_iterator` during tokenization process?
+
+`batch_iterator` yields batches of text, allowing the tokenizer to process the data in chunks, because the dataset may be too large to fit into memory at once.
+
+### What are some special tokens needed for tokenization process?
+
+| Token    | Description                                                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `<s>`    | Start-of-sequence token, marks the beginning of a text sequence; helps the model know where input starts                        |
+| `</s>`   | End-of-sequence token, marks the end of a text sequence; helps the model know where to stop generating or processing            |
+| `<pad>`  | Padding token, used to pad sequences to the same length in a batch; ensures uniform input size for batch processing             |
+| `<unk>`  | Unknown token, used for out-of-vocabulary or unrecognized tokens; handles rare or unseen words                                  |
+| `<mask>` | Mask token, used for masked language modeling tasks; allows the model to learn context by predicting masked words in a sentence |
+
+### How is `<pad>` token used?
+
+Suppose we have a batch of tokenized sequences of different lengths:
+
+- Sequence 1: `<s> Hello world </s>`
+- Sequence 2: `<s> How are you? </s>`
+- Sequence 3: `<s> Hi </s>`
+
+To process these in a batch, all sequences must have the same length. We pad the shorter ones with `<pad>`:
+
+| Sequence                | Token IDs      |
+| ----------------------- | -------------- |
+| `<s> Hello world </s>`  | 0 10 20 2 1    |
+| `<s> How are you? </s>` | 0 11 12 13 2 1 |
+| `<s> Hi </s>`           | 0 14 2 1 1 1   |
+
+Here, `1` is the ID for `<pad>`. So, `<pad>` fills the empty spots so all sequences are the same length for efficient batch processing.
+
+### What is `min_frequency` used for?
+
+`min_frequency` sets the minimum number of times a subword or token must appear in the dataset to be included in the vocabulary. It helps filter out rare or noisy tokens, reducing vocabulary size and improving model generalization. Tokens that appear less than `min_frequency` times are replaced with the <unk> (unknown) token.

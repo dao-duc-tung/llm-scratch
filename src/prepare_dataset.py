@@ -14,9 +14,7 @@ dataset = load_dataset(
 dataset = dataset.remove_columns([col for col in dataset.column_names if col != "text"])
 
 # Extract sample rows
-sampled_dataset = [dataset[i] for i in range(10000)]
-
-# Save to JSONL file
+sampled_dataset = dataset.select(range(10000))
 output_path = "data/fineweb_10k.jsonl"
 with open(output_path, "w", encoding="utf-8") as f:
     for row in sampled_dataset:
