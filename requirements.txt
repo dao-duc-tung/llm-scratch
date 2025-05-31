@@ -1,3 +1,4 @@
 tokenizers==0.21.1
-transformers==4.52.4
+transformers[torch]==4.52.4
 datasets[s3]==3.6.0
+torch==2.6.0

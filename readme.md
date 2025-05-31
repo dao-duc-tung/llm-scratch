@@ -17,9 +17,9 @@ pyenv local llm
 
 ## 1. Prepare a dataset
 
-The file `src/prepare_dataset.py` downloads the dataset and creates a sample dataset for testing the code faster.
+The file `src/prepare_dataset.py` downloads the dataset and creates a sample dataset of 10k rows.
 
-### Why do we need a dataset?
+### 1.1. Why do we need a dataset?
 
 The dataset provides examples for the model to learn language patterns such as:
 
@@ -27,7 +27,7 @@ The dataset provides examples for the model to learn language patterns such as:
 - Build vocabulary: the model observes a wide range of words and phrases
 - Understand context: the model observes how sentences and ideas flow and learns to generate coherent responses
 
-### What are criteria to consider a dataset "good enough"?
+### 1.2. What are criteria to consider a dataset "good enough"?
 
 - Quality
   - Contain well-formed, grammatical English sentences
@@ -56,7 +56,7 @@ Assume that we already clean and preprocess the dataset (eg. remove non-English,
 
 The file `src/train_tokenizer.py` loads the dataset and trains a tokenizer using the dataset.
 
-### Why do we need to tokenize the dataset?
+### 2.1. Why do we need to tokenize the dataset?
 
 - Numerical representation: models require input as numbers. Tokenization maps text to token IDs
 - Vocabulary building: tokenization defines the set of tokens (vocabulary) the model will understand
@@ -65,15 +65,15 @@ The file `src/train_tokenizer.py` loads the dataset and trains a tokenizer using
 
 Let's use byte-level Byte-Pair Encoding algorithm to tokenize our dataset.
 
-### How does byte-level BPE work?
+### 2.2. How does byte-level BPE work?
 
 Ref: https://en.wikipedia.org/wiki/Byte-pair_encoding
 
-### Why do we need `batch_iterator` during tokenization process?
+### 2.3. Why do we need `batch_iterator` during tokenization process?
 
 `batch_iterator` yields batches of text, allowing the tokenizer to process the data in chunks, because the dataset may be too large to fit into memory at once.
 
-### What are some special tokens needed for tokenization process?
+### 2.4. What are some special tokens needed for tokenization process?
 
 | Token    | Description                                                                                                                     |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -83,7 +83,7 @@ Ref: https://en.wikipedia.org/wiki/Byte-pair_encoding
 | `<unk>`  | Unknown token, used for out-of-vocabulary or unrecognized tokens; handles rare or unseen words                                  |
 | `<mask>` | Mask token, used for masked language modeling tasks; allows the model to learn context by predicting masked words in a sentence |
 
-### How is `<pad>` token used?
+### 2.5. How is `<pad>` token used?
 
 Suppose we have a batch of tokenized sequences of different lengths:
 
@@ -101,7 +101,7 @@ To process these in a batch, all sequences must have the same length. We pad the
 
 Here, `1` is the ID for `<pad>`. So, `<pad>` fills the empty spots so all sequences are the same length for efficient batch processing.
 
-### What is `min_frequency` used for?
+### 2.6. What is `min_frequency` used for?
 
 `min_frequency` sets the minimum number of times a subword or token must appear in the dataset to be included in the vocabulary. It helps filter out rare or noisy tokens, reducing vocabulary size and improving model generalization. Tokens that appear less than `min_frequency` times are replaced with the <unk> (unknown) token.
 
@@ -109,17 +109,17 @@ Here, `1` is the ID for `<pad>`. So, `<pad>` fills the empty spots so all sequen
 
 The file `src/tokenize_dataset.py` loads the dataset and tokenizes it using the tokenized trained above.
 
-### Why do we need to care about context length when tokenizing the dataset?
+### 3.1. Why do we need to care about context length when tokenizing the dataset?
 
 The context length (eg. 1024 tokens) is the maximum number of tokens the model can process in a single input sequence. If a tokenized sequence is longer than the context length, we must truncate or split it. If it’s shorter, we may need to pad it (with <pad>) for batching.
 
-### Why do we need to use batching when tokenizing?
+### 3.2. Why do we need to use batching when tokenizing?
 
 Because we cannot fit the data into memory. In our code, we use a batch size of 1000 rows.
 
-### What are methods to tokenize each batch of the dataset?
+### 3.3. What are methods to tokenize each batch of the dataset?
 
-#### Method 1: Truncate the batch by context length
+#### 3.3.1. Method 1: Truncate the batch by context length
 
 ```python
 def tokenize_function(batch):
@@ -133,7 +133,7 @@ def tokenize_function(batch):
 
 However, truncation discards tokens beyond the context window, wasting data. Let's try method 2.
 
-#### Method 2: Split long sequences into multiple chunks of the context length
+#### 3.3.2. Method 2: Split long sequences into multiple chunks of the context length
 
 ```python
 def tokenize_function(batch):
@@ -156,7 +156,7 @@ This way, we don’t lose any data, and every token in the dataset can be used f
 
 However, if a text is longer than 1024 tokens, it is split into multiple 1024-token chunks; any leftover tokens (<1024) are discarded. If a text is shorter than 1024 tokens, it is ignored (since no full chunk can be made). Some data may be wasted, especially for shorter texts. Let's try method 3.
 
-#### Method 3: Concatenate all texts in the batch before chunking
+#### 3.3.3. Method 3: Concatenate all texts in the batch before chunking
 
 ```python
 def tokenize_function(batch):
@@ -185,3 +185,100 @@ def tokenize_function(batch):
 This method maximizes data usage by concatenating all texts before chunking. Only the very last partial chunk (if any) is discarded. This approach is more efficient for LLM pretraining, especially with many short texts.
 
 Even though chunks may span across multiple texts, separated by EOS tokens, this method is closer to how LLMs are typically pretrained (treating the dataset as a continuous stream).
+
+## 4. Train model
+
+The file `src/compute_params.py` helps to compute the number of params for GPT-2.
+
+The file `src/train_model.py` trains the model.
+
+The file `src/test_model.py` loads the model and completes a prompt.
+
+### 4.1. How many params should our model have?
+
+Our goal is to train a model with < 1B params using GPT-2 architecture. The [Chinchilla/Hoffman scaling laws](https://arxiv.org/abs/2203.15556) suggests that **20 tokens per param** are needed to achieve a notable performance.
+
+If we use the original FineWeb dataset with 10e9 tokens for ~15e6 rows, our model should have 0.5e9 params. However, we are using only 10k rows as the sample dataset, our model should have 0.3e6 params.
+
+### 4.2. How to compute the number of params for GPT-2?
+
+Ref: this answer is generated by GPT-4.1.
+
+To compute the number of parameters for GPT-2 given `n_layer`, `n_head`, `n_embd`, `vocab_size`, and `n_positions`, we need to sum the parameters from:
+
+1. Embedding layers
+2. Transformer blocks (per layer)
+3. Final layer norm
+4. Output (LM head)
+
+#### 4.2.1. Embedding layers
+
+- Token embeddings: `vocab_size * n_embd`
+- Position embeddings: `n_positions * n_embd`
+
+#### 4.2.2. Transformer block (per layer)
+
+Each block contains:
+
+- LayerNorm1: `2 * n_embd` (weight + bias)
+- Self-Attention:
+  - Query, Key, Value: `3 * (n_embd * n_embd + n_embd)` (weights + biases)
+  - Output projection: `n_embd * n_embd + n_embd`
+- LayerNorm2: `2 * n_embd`
+- MLP:
+  - First linear: `n_embd * (4 * n_embd) + (4 * n_embd)` (weights + biases)
+  - Second linear: `(4 * n_embd) * n_embd + n_embd`
+
+Total per layer:
+
+```
+LayerNorms: 2 * (2 * n_embd) = 4 * n_embd
+Attention: 3 * (n_embd * n_embd + n_embd) + (n_embd * n_embd + n_embd) = 4 * n_embd * n_embd + 4 * n_embd
+MLP: n_embd * 4 * n_embd + 4 * n_embd + 4 * n_embd * n_embd + n_embd = 8 * n_embd * n_embd + 5 * n_embd
+Total per layer: 8 * n_embd * n_embd (attn+mlp) + 4 * n_embd * n_embd (attn) + 4 * n_embd (attn) + 5 * n_embd (mlp) + 4 * n_embd (ln) = 12 * n_embd * n_embd + 13 * n_embd
+```
+
+But for clarity, sum as:
+
+```
+Per layer = 12 * n_embd * n_embd + 13 * n_embd
+```
+
+#### 4.2.3. Final LayerNorm
+
+`2 * n_embd`
+
+#### 4.2.4. Output (LM Head)
+
+Usually tied to token embeddings, so no extra parameters. If untied: `vocab_size * n_embd`
+
+#### 4.2.5. Total Parameter Formula
+
+```python
+total_params = (
+    # Embeddings
+    vocab_size * n_embd +
+    n_positions * n_embd +
+    # Transformer blocks
+    n_layer * (12 * n_embd * n_embd + 13 * n_embd) +
+    # Final LayerNorm
+    2 * n_embd
+    # + vocab_size * n_embd  # if output head is untied
+)
+```
+
+#### 4.2.6. Note
+
+- This formula gives a very close estimate to the official GPT-2 parameter counts
+- For most practical purposes, the dominant term is `n_layer * 12 * n_embd^2`
+- `n_head` is not used because it affects the model’s architecture and parallelism, not the total parameter count, which is governed by `n_embd` and `n_layer`
+  - It is a factor in how the attention mechanism is split internally (eg. each head has a dimension of `n_embd // n_head`), but the total number of parameters for the attention layers depends only on `n_embd` (not how it is divided among heads)
+  - The weights for query, key, value, and output projections are all of size `[n_embd, n_embd]` regardless of the number of heads.
+
+| Component         | Formula                               |
+| ----------------- | ------------------------------------- |
+| Token Embedding   | `vocab_size * n_embd`                 |
+| Pos Embedding     | `n_positions * n_embd`                |
+| Transformer Block | `n_layer * (12*n_embd^2 + 13*n_embd)` |
+| Final LayerNorm   | `2 * n_embd`                          |
+| Output Head       | (tied, usually not counted)           |

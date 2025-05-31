@@ -3,8 +3,9 @@ import os
 from datasets import load_dataset
 from transformers import PreTrainedTokenizerFast
 
+tokenizer_file = "data/fineweb_10k_tokenize_bpe.json"
 tokenizer = PreTrainedTokenizerFast(
-    tokenizer_file="data/fineweb_10k_tokenize_bpe.json",
+    tokenizer_file=tokenizer_file,
     bos_token="<s>",
     eos_token="</s>",
     pad_token="<pad>",
@@ -16,6 +17,14 @@ data_path = "data/fineweb_10k.jsonl"
 dataset = load_dataset("json", data_files=data_path, split="train")
 dataset = dataset.remove_columns([col for col in dataset.column_names if col != "text"])
 
+# count total tokens in the dataset
+total_tokens = 0
+for text in dataset["text"]:
+    total_tokens += len(tokenizer.encode(text, add_special_tokens=False))
+
+print(f"Total number of tokens in the dataset: {total_tokens}")
+
+# define the tokenize_function
 context_length = 1024
 
 
