@@ -3,6 +3,7 @@ from tokenizers import ByteLevelBPETokenizer
 
 data_path = "data/fineweb_10k.jsonl"
 dataset = load_dataset("json", data_files=data_path, split="train")
+dataset = dataset.remove_columns([col for col in dataset.column_names if col != "text"])
 
 # train a byte-level BPE tokenizer
 tokenizer = ByteLevelBPETokenizer()
