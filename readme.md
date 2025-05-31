@@ -50,7 +50,7 @@ Let's pick [the 10 billion tokens subset of the FineWeb dataset on HuggingFace](
 | Did you know ...    | <urn..> | CC-.. | http://.. | 2013-.. | s3://..   | en       | 0.947991       | 821         |
 | Car Wash For ...    | <urn..> | CC-.. | http://.. | 2013-.. | s3://..   | en       | 0.911518       | 125         |
 
-## Tokenize the dataset
+## Train a tokenizer
 
 Assume that we already clean and preprocess the dataset (eg. remove non-English, deduplicate, filter for quality), let's tokenize it.
 
