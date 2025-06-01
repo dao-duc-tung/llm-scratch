@@ -111,7 +111,7 @@ The file `src/tokenize_dataset.py` loads the dataset and tokenizes it using the 
 
 ### 3.1. Why do we need to care about context length when tokenizing the dataset?
 
-The context length (eg. 1024 tokens) is the maximum number of tokens the model can process in a single input sequence. If a tokenized sequence is longer than the context length, we must truncate or split it. If it’s shorter, we may need to pad it (with <pad>) for batching.
+The context length (eg. 1024 tokens) is the maximum number of tokens the model can process in a single input sequence. If a tokenized sequence is longer than the context length, we must truncate or split it. If it's shorter, we may need to pad it (with <pad>) for batching.
 
 ### 3.2. Why do we need to use batching when tokenizing?
 
@@ -152,7 +152,7 @@ def tokenize_function(batch):
   return {"input_ids": input_ids}
 ```
 
-This way, we don’t lose any data, and every token in the dataset can be used for training.
+This way, we don't lose any data, and every token in the dataset can be used for training.
 
 However, if a text is longer than 1024 tokens, it is split into multiple 1024-token chunks; any leftover tokens (<1024) are discarded. If a text is shorter than 1024 tokens, it is ignored (since no full chunk can be made). Some data may be wasted, especially for shorter texts. Let's try method 3.
 
@@ -271,7 +271,7 @@ total_params = (
 
 - This formula gives a very close estimate to the official GPT-2 parameter counts
 - For most practical purposes, the dominant term is `n_layer * 12 * n_embd^2`
-- `n_head` is not used because it affects the model’s architecture and parallelism, not the total parameter count, which is governed by `n_embd` and `n_layer`
+- `n_head` is not used because it affects the model's architecture and parallelism, not the total parameter count, which is governed by `n_embd` and `n_layer`
   - It is a factor in how the attention mechanism is split internally (eg. each head has a dimension of `n_embd // n_head`), but the total number of parameters for the attention layers depends only on `n_embd` (not how it is divided among heads)
   - The weights for query, key, value, and output projections are all of size `[n_embd, n_embd]` regardless of the number of heads.
 
@@ -282,3 +282,42 @@ total_params = (
 | Transformer Block | `n_layer * (12*n_embd^2 + 13*n_embd)` |
 | Final LayerNorm   | `2 * n_embd`                          |
 | Output Head       | (tied, usually not counted)           |
+
+## 5. Instruction tuning
+
+The file `src/prepare_dataset_instruct.py` prepares the dataset for instruction tuning.
+
+The file `src/finetune_instruct.py` starts the instruction tuning process for the pre-trained model above.
+
+### 5.1. Why do we need instruction tuning?
+
+- Improve usability: models become better at following specific prompts and producing outputs that match what users want
+- Generalize to new tasks: models can handle a wider variety of tasks, even those not seen during training, just by giving clear instructions
+
+For example:
+
+```bash
+User: Can you tell me who is the current president of USA?
+Model: Sure! The current president of USA is ...
+```
+
+### 5.2. Why do we need a chat template?
+
+A chat template provides a consistent structure for conversations, making it clear where each user and assistant message begins and ends. This helps the model:
+
+- Recognize roles: distinguish between user and assistant turns
+- Learn boundaries: understand where one message ends and another begins
+- Generalize better: apply the learned structure to new conversations
+
+For example, using ChatML (Chat Markup Language from OpenAI);
+
+```bash
+<|im_start|>user
+Can you tell me who is the current president of USA?
+<|im_end|>
+<|im_start|>assistant
+Sure! The current president of USA is ...
+<|im_end|>
+```
+
+The tokens `<|im_start|>` and `<|im_end|>` are added into the tokenizer vocab and expand the model's token embeddings.

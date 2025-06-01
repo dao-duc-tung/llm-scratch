@@ -47,8 +47,9 @@ tokenized_dataset_dir = "data/tokenized_fineweb_10k"
 tokenized_dataset = load_from_disk(tokenized_dataset_dir)
 
 # config the training
+OUTPUT_DIR = "models/training/fineweb_10k_gpt2"
 training_args = TrainingArguments(
-    output_dir="models/training/fineweb_10k_gpt2",
+    output_dir=OUTPUT_DIR,
     overwrite_output_dir=True,
     num_train_epochs=1,
     # effective batch size = 16*4 = 64
@@ -63,7 +64,7 @@ training_args = TrainingArguments(
     prediction_loss_only=True,
     # no GPU available
     # fp16=True,
-    logging_dir="logs",
+    logging_dir=f"{OUTPUT_DIR}/logs",
     # no wandb available
     # report_to="wandb",
     # run_name="fineweb_10k_gpt2",
