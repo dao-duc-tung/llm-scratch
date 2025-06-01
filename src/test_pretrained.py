@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
 
-input_text = "Vietnam is a"
+input_text = "Naruto is a"
 input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
 output_ids = model.generate(
     input_ids, max_new_tokens=50, do_sample=True, temperature=0.8, top_k=50, top_p=0.95

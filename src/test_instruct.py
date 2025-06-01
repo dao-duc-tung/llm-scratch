@@ -13,7 +13,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
 
-input_text = "Vietnam is a"
+input_text = "Naruto is a"
 input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
 output_ids = model.generate(
     input_ids, max_new_tokens=50, do_sample=True, temperature=0.8, top_k=50, top_p=0.95
@@ -30,7 +30,7 @@ pipe = pipeline(
     device=0 if torch.cuda.is_available() else -1,
 )
 messages = [
-    {"role": "user", "content": "Complete this sentence: Vietnam is a"},
+    {"role": "user", "content": "Complete this sentence: Naruto is a"},
 ]
 prompt = tokenizer.apply_chat_template(
     messages, tokenize=False, add_generation_prompt=True

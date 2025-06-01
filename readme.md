@@ -5,17 +5,33 @@ The goal is to build an LLM from scratch that does:
 - Construct sentences in English without major grammatical flaws
 - Generate a coherent response to my query
 - No need to be factually correct
-- Not too large in param size, less than 1B params
-- 1024 context length
 
-Setup environment:
+However, as I'm using my PC to train the model, I use only 0.5% of the FineWeb dataset on HuggingFace. And my model has only 1.6M params with a context length of 256.
+
+Here is an example of my model's output:
+
+```bash
+# Testing pretrained model: input = "Naruto is a"
+Naruto is a very little little as a new things.
+One is a few.
+The first. In the day.
+There was so it can be a lot of the same year I'm that the way to be more well.
+
+# Testing instructed model
+<|im_start|>user
+Complete this sentence: Naruto is a<|im_end|>
+<|im_start|>assistant
+I can be an different of the following in a new, and make the main way to create a difference of the way to be known to take a list. Make a important, the world is a long for place?
+```
+
+## 1. Prepare a dataset
+
+**Setup environment**
 
 ```bash
 pyenv virtualenv 3.13.3 llm
 pyenv local llm
 ```
-
-## 1. Prepare a dataset
 
 The file `src/prepare_dataset.py` downloads the dataset and creates a sample dataset of 10k rows.
 
