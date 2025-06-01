@@ -6,7 +6,7 @@ The goal is to build an LLM from scratch that does:
 - Generate a coherent response to my query
 - No need to be factually correct
 
-However, as I'm using my PC to train the model, I use only 0.5% of the FineWeb dataset on HuggingFace. And my model has only 1.6M params with a context length of 256.
+However, as I'm using my PC to train the model, I use only 0.5% of the FineWeb dataset on HuggingFace. My model has only 1.6M params with a context length of 256.
 
 Here is an example of my model's output:
 
@@ -109,17 +109,17 @@ Suppose we have a batch of tokenized sequences of different lengths:
 
 To process these in a batch, all sequences must have the same length. We pad the shorter ones with `<pad>`:
 
-| Sequence                | Token IDs      |
-| ----------------------- | -------------- |
-| `<s> Hello world </s>`  | 0 10 20 2 1    |
-| `<s> How are you? </s>` | 0 11 12 13 2 1 |
-| `<s> Hi </s>`           | 0 14 2 1 1 1   |
+| Sequence                | Token IDs        |
+| ----------------------- | ---------------- |
+| `<s> Hello world </s>`  | `0 10 20 2 1`    |
+| `<s> How are you? </s>` | `0 11 12 13 2 1` |
+| `<s> Hi </s>`           | `0 14 2 1 1 1`   |
 
 Here, `1` is the ID for `<pad>`. So, `<pad>` fills the empty spots so all sequences are the same length for efficient batch processing.
 
 ### 2.6. What is `min_frequency` used for?
 
-`min_frequency` sets the minimum number of times a subword or token must appear in the dataset to be included in the vocabulary. It helps filter out rare or noisy tokens, reducing vocabulary size and improving model generalization. Tokens that appear less than `min_frequency` times are replaced with the <unk> (unknown) token.
+`min_frequency` sets the minimum number of times a subword or token must appear in the dataset to be included in the vocabulary. It helps filter out rare or noisy tokens, reducing vocabulary size and improving model generalization. Tokens that appear less than `min_frequency` times are replaced with the `<unk>` (unknown) token.
 
 ## 3. Tokenize the dataset
 
@@ -127,7 +127,7 @@ The file `src/tokenize_dataset.py` loads the dataset and tokenizes it using the 
 
 ### 3.1. Why do we need to care about context length when tokenizing the dataset?
 
-The context length (eg. 1024 tokens) is the maximum number of tokens the model can process in a single input sequence. If a tokenized sequence is longer than the context length, we must truncate or split it. If it's shorter, we may need to pad it (with <pad>) for batching.
+The context length (eg. 1024 tokens) is the maximum number of tokens the model can process in a single input sequence. If a tokenized sequence is longer than the context length, we must truncate or split it. If it's shorter, we may need to pad it (with `<pad>`) for batching.
 
 ### 3.2. Why do we need to use batching when tokenizing?
 
@@ -212,7 +212,7 @@ The file `src/test_pretrained.py` loads the model and completes a prompt.
 
 ### 4.1. How many params should our model have?
 
-Our goal is to train a model with < 1B params using GPT-2 architecture. The [Chinchilla/Hoffman scaling laws](https://arxiv.org/abs/2203.15556) suggests that **20 tokens per param** are needed to achieve a notable performance.
+Our goal is to train a model with less than 1B params using GPT-2 architecture. The [Chinchilla/Hoffman scaling laws](https://arxiv.org/abs/2203.15556) suggests that **20 tokens per param** are needed to achieve a notable performance.
 
 If we use the original FineWeb dataset with 10e9 tokens for ~15e6 rows, our model should have 0.5e9 params. However, if we use only 10e3 rows as the sample dataset, our model should have 0.3e6 params. If we use 100e3 rows, our model should have 3e6 params.
 
