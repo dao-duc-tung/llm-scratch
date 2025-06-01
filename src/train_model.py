@@ -8,10 +8,15 @@ from transformers import (
     TrainingArguments,
 )
 
+TOKENIZER_FILE = "data/fineweb_100k_tokenize_bpe.json"
+TOKENIZED_DATASET_DIR = "data/tokenized_fineweb_100k"
+TRAINING_OUTPUT_DIR = f"models/training/gpt2_01"
+MODEL_PATH = f"models/gpt2_01"
+CONTEXT_LENGTH = 256
+
 # load the tokenizer
-tokenizer_file = "data/fineweb_10k_tokenize_bpe.json"
 tokenizer = PreTrainedTokenizerFast(
-    tokenizer_file=tokenizer_file,
+    tokenizer_file=TOKENIZER_FILE,
     bos_token="<s>",
     eos_token="</s>",
     pad_token="<pad>",
@@ -23,10 +28,11 @@ tokenizer = PreTrainedTokenizerFast(
 # define the model
 # 15e6 rows -> 0.5e9 params
 # 10e3 rows -> 0.3e6 params
+# 100e3 rows -> 3e6 params, but here we use 1e6 params
 config = GPT2Config(
     vocab_size=tokenizer.vocab_size,
-    n_positions=1024,
-    n_embd=8,
+    n_positions=CONTEXT_LENGTH,
+    n_embd=32,
     n_layer=4,
     n_head=4,
     bos_token_id=tokenizer.bos_token_id,
@@ -43,28 +49,25 @@ data_collator = DataCollatorForLanguageModeling(
 )
 
 # load the tokenized dataset
-tokenized_dataset_dir = "data/tokenized_fineweb_10k"
-tokenized_dataset = load_from_disk(tokenized_dataset_dir)
+tokenized_dataset = load_from_disk(TOKENIZED_DATASET_DIR)
 
 # config the training
-OUTPUT_DIR = "models/training/fineweb_10k_gpt2"
 training_args = TrainingArguments(
-    output_dir=OUTPUT_DIR,
+    output_dir=TRAINING_OUTPUT_DIR,
     overwrite_output_dir=True,
     num_train_epochs=1,
-    # effective batch size = 16*4 = 64
-    per_device_train_batch_size=16,
+    per_device_train_batch_size=32,
     gradient_accumulation_steps=4,
     learning_rate=1e-3,
     weight_decay=0.01,
     warmup_ratio=0.03,
-    logging_steps=25,
-    save_steps=25,
+    logging_steps=500,
+    save_steps=500,
     save_total_limit=4,
     prediction_loss_only=True,
     # no GPU available
     # fp16=True,
-    logging_dir=f"{OUTPUT_DIR}/logs",
+    logging_dir=f"{TRAINING_OUTPUT_DIR}/logs",
     # no wandb available
     # report_to="wandb",
     # run_name="fineweb_10k_gpt2",
@@ -82,4 +85,4 @@ trainer = Trainer(
     train_dataset=tokenized_dataset,
 )
 trainer.train()
-trainer.save_model("models/fineweb_10k_gpt2")
+trainer.save_model(MODEL_PATH)

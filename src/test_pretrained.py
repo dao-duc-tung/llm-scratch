@@ -1,13 +1,10 @@
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizerFast
 
-# Load the tokenizer
-tokenizer_file = "data/fineweb_10k_tokenize_bpe.json"
-tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_file)
+TOKENIZER_FILE = "data/fineweb_100k_tokenize_bpe.json"
+MODEL_PATH = "models/gpt2_01"
 
-# Load the model
-# model_dir = "models/training/fineweb_10k_gpt2/checkpoint-75"
-MODEL_PATH = "models/fineweb_10k_gpt2"
+tokenizer = PreTrainedTokenizerFast(tokenizer_file=TOKENIZER_FILE)
 model = AutoModelForCausalLM.from_pretrained(MODEL_PATH)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)

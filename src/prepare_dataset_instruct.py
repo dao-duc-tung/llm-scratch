@@ -8,19 +8,23 @@ from utils import load_tokenizer_for_instruct
 
 ALPACA_DATASET_NAME = "tatsu-lab/alpaca"
 DOLLY_DATASET_NAME = "databricks/databricks-dolly-15k"
-SAMPLE_SIZE = 500
-TRAIN_CONVOS_FILE = f"data/alpaca_{SAMPLE_SIZE}_dolly_{SAMPLE_SIZE}/train_convos.jsonl"
-VAL_CONVOS_FILE = f"data/alpaca_{SAMPLE_SIZE}_dolly_{SAMPLE_SIZE}/val_convos.jsonl"
+ALPACA_SAMPLE_SIZE = 50000
+DOLLY_SAMPLE_SIZE = 10000
+TRAIN_CONVOS_FILE = (
+    f"data/alpaca_{ALPACA_SAMPLE_SIZE}_dolly_{DOLLY_SAMPLE_SIZE}/train_convos.jsonl"
+)
+VAL_CONVOS_FILE = (
+    f"data/alpaca_{ALPACA_SAMPLE_SIZE}_dolly_{DOLLY_SAMPLE_SIZE}/val_convos.jsonl"
+)
 SEED = 17
-MAX_LENGTH = 1024
+MAX_LENGTH = 256
+TOKENIZER_FILE = "data/fineweb_100k_tokenize_bpe.json"
 
-
-TOKENIZER_FILE = "data/fineweb_10k_tokenize_bpe.json"
 tokenizer = load_tokenizer_for_instruct(TOKENIZER_FILE)
 
 print("Loading ALPACA")
 alpaca_split = load_dataset(ALPACA_DATASET_NAME, split="train")
-alpaca_split = alpaca_split.select(range(SAMPLE_SIZE)).train_test_split(
+alpaca_split = alpaca_split.select(range(ALPACA_SAMPLE_SIZE)).train_test_split(
     test_size=0.1, seed=SEED, shuffle=True
 )
 alpaca_train = alpaca_split["train"]
@@ -59,7 +63,7 @@ print(
 
 print("Loading Dolly 15k")
 dolly = load_dataset(DOLLY_DATASET_NAME, split="train")
-dolly = dolly.select(range(SAMPLE_SIZE))
+dolly = dolly.select(range(DOLLY_SAMPLE_SIZE))
 
 # Filter out examples with missing 'instruction' or 'response' in Dolly
 dolly_filtered = dolly.filter(

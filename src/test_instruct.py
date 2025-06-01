@@ -1,8 +1,8 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
-MODEL_PATH = "models/fineweb_10k_gpt2/"
-FINAL_MODEL_PATH = "models/fineweb_10k_gpt2_instruct"
+MODEL_PATH = "models/gpt2_01"
+FINAL_MODEL_PATH = "models/gpt2_01_instruct"
 PRETRAINED_TOKENIZER_PATH = f"{FINAL_MODEL_PATH}/pretrained_tokenizer"
 
 tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_TOKENIZER_PATH)

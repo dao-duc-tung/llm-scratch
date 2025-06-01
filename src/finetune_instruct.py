@@ -12,16 +12,21 @@ from transformers import (
 
 from utils import load_tokenizer_for_instruct
 
-MODEL_PATH = "models/fineweb_10k_gpt2/"
-TOKENIZER_FILE = "data/fineweb_10k_tokenize_bpe.json"
-OUTPUT_DIR = "models/instruct/fineweb_10k_gpt2_alpaca_dolly_neftune"
-SAMPLE_SIZE = 500
-TRAIN_CONVOS_FILE = f"data/alpaca_{SAMPLE_SIZE}_dolly_{SAMPLE_SIZE}/train_convos.jsonl"
-VAL_CONVOS_FILE = f"data/alpaca_{SAMPLE_SIZE}_dolly_{SAMPLE_SIZE}/val_convos.jsonl"
-FINAL_MODEL_PATH = "models/fineweb_10k_gpt2_instruct"
+MODEL_PATH = "models/gpt2_01"
+TOKENIZER_FILE = "data/fineweb_100k_tokenize_bpe.json"
+OUTPUT_DIR = "models/instruct/gpt2_01_alpaca_dolly_neftune"
+ALPACA_SAMPLE_SIZE = 50000
+DOLLY_SAMPLE_SIZE = 10000
+TRAIN_CONVOS_FILE = (
+    f"data/alpaca_{ALPACA_SAMPLE_SIZE}_dolly_{DOLLY_SAMPLE_SIZE}/train_convos.jsonl"
+)
+VAL_CONVOS_FILE = (
+    f"data/alpaca_{ALPACA_SAMPLE_SIZE}_dolly_{DOLLY_SAMPLE_SIZE}/val_convos.jsonl"
+)
+FINAL_MODEL_PATH = "models/gpt2_01_instruct"
 PRETRAINED_TOKENIZER_PATH = f"{FINAL_MODEL_PATH}/pretrained_tokenizer"
 
-MAX_LENGTH = 1024
+MAX_LENGTH = 256
 NEFTUNE_NOISE_ALPHA = 5.0
 
 
@@ -173,7 +178,7 @@ training_args = TrainingArguments(
     output_dir=OUTPUT_DIR,
     overwrite_output_dir=True,
     num_train_epochs=5,
-    per_device_train_batch_size=8,
+    per_device_train_batch_size=32,
     gradient_accumulation_steps=4,
     save_steps=500,
     save_total_limit=6,

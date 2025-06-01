@@ -198,7 +198,7 @@ The file `src/test_pretrained.py` loads the model and completes a prompt.
 
 Our goal is to train a model with < 1B params using GPT-2 architecture. The [Chinchilla/Hoffman scaling laws](https://arxiv.org/abs/2203.15556) suggests that **20 tokens per param** are needed to achieve a notable performance.
 
-If we use the original FineWeb dataset with 10e9 tokens for ~15e6 rows, our model should have 0.5e9 params. However, we are using only 10k rows as the sample dataset, our model should have 0.3e6 params.
+If we use the original FineWeb dataset with 10e9 tokens for ~15e6 rows, our model should have 0.5e9 params. However, if we use only 10e3 rows as the sample dataset, our model should have 0.3e6 params. If we use 100e3 rows, our model should have 3e6 params.
 
 ### 4.2. How to compute the number of params for GPT-2?
 

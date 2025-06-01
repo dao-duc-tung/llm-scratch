@@ -3,9 +3,12 @@ import os
 from datasets import load_dataset
 from transformers import PreTrainedTokenizerFast
 
-tokenizer_file = "data/fineweb_10k_tokenize_bpe.json"
+TOKENIZER_FILE = "data/fineweb_100k_tokenize_bpe.json"
+DATA_PATH = "data/fineweb_100k.jsonl"
+TOKENIZED_DATASET_DIR = "data/tokenized_fineweb_100k"
+
 tokenizer = PreTrainedTokenizerFast(
-    tokenizer_file=tokenizer_file,
+    tokenizer_file=TOKENIZER_FILE,
     bos_token="<s>",
     eos_token="</s>",
     pad_token="<pad>",
@@ -13,19 +16,11 @@ tokenizer = PreTrainedTokenizerFast(
     mask_token="<mask>",
 )
 
-data_path = "data/fineweb_10k.jsonl"
-dataset = load_dataset("json", data_files=data_path, split="train")
+dataset = load_dataset("json", data_files=DATA_PATH, split="train")
 dataset = dataset.remove_columns([col for col in dataset.column_names if col != "text"])
 
-# count total tokens in the dataset
-total_tokens = 0
-for text in dataset["text"]:
-    total_tokens += len(tokenizer.encode(text, add_special_tokens=False))
-
-print(f"Total number of tokens in the dataset: {total_tokens}")
-
 # define the tokenize_function
-context_length = 1024
+context_length = 256
 
 
 def tokenize_function(batch):
@@ -38,8 +33,8 @@ def tokenize_function(batch):
     # Split into fixed-size chunks, ignore incomplete chunks
     # example of values of chunks
     # [
-    #     [123, 456, 789, ..., 42],  # 1024 integers
-    #     [234, 567, 890, ..., 99],  # 1024 integers
+    #     [123, 456, 789, ..., 42],  # context_length integers
+    #     [234, 567, 890, ..., 99],  # context_length integers
     #     ...
     # ]
     chunks = []
@@ -48,7 +43,7 @@ def tokenize_function(batch):
         if len(chunk) == context_length:
             chunks.append(chunk)
 
-    # Hugging Face Datasets’ map method requires to return a dict mapping new column names to values (eg. {"input_ids": ...})
+    # Hugging Face Datasets' map method requires to return a dict mapping new column names to values (eg. {"input_ids": ...})
     return {"input_ids": chunks, "labels": chunks.copy()}
 
 
@@ -60,7 +55,6 @@ tokenized_dataset = dataset.map(
     num_proc=os.cpu_count(),
 )
 
-tokenized_dataset_dir = "data/tokenized_fineweb_10k"
-tokenized_dataset.save_to_disk(tokenized_dataset_dir)
+tokenized_dataset.save_to_disk(TOKENIZED_DATASET_DIR)
 
 print(tokenized_dataset[0])
