@@ -192,7 +192,7 @@ The file `src/compute_params.py` helps to compute the number of params for GPT-2
 
 The file `src/train_model.py` trains the model.
 
-The file `src/test_model.py` loads the model and completes a prompt.
+The file `src/test_pretrained.py` loads the model and completes a prompt.
 
 ### 4.1. How many params should our model have?
 
@@ -287,7 +287,9 @@ total_params = (
 
 The file `src/prepare_dataset_instruct.py` prepares the dataset for instruction tuning.
 
-The file `src/finetune_instruct.py` starts the instruction tuning process for the pre-trained model above.
+The file `src/finetune_instruct.py` starts the instruction tuning process for the pretrained model above.
+
+The file `src/test_instruct.py` tests the pretrained model and the instructed model.
 
 ### 5.1. Why do we need instruction tuning?
 
